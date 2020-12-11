@@ -88,17 +88,11 @@ initialiser(p::Parameters) = initialiser(p.type; p.fixed...)
 
 function __init__()
     @require StaticArrays = "90137ffa-7385-5640-81b9-e52037218182" begin
-        function free_param(::Type{<:StaticArrays.SVector{N}}, x, k) where N
-            k[] += N
-            :(StaticArrays.SVector{$N}(view($x, $(k[] - N:k[] - 1))))
+        function free_param(::Type{<:StaticArrays.SArray{S,T,N,L}}, x, k) where {S,T,N,L}
+            k[] += L
+            :(StaticArrays.SArray{S}(view($x, $(k[] - L:k[] - 1))))
         end
-        function free_param(::Type{<:StaticArrays.SMatrix{N1,N2}}, x, k) where {N1, N2}
-            N = N1 * N2
-            k[] += N
-            :(StaticArrays.SMatrix{$N1, $N2}(view($x, $(k[] - N:k[] - 1))))
-        end
-        free_param_length(::Type{<:StaticArrays.SVector{N}}) where N = N
-        free_param_length(::Type{<:StaticArrays.SMatrix{N1,N2}}) where {N1, N2} = N1 * N2
+        free_param_length(::Type{<:StaticArrays.SArray{S,T,N,L}}) where {S,T,N,L} = L
     end
 end
 
