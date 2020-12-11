@@ -1,0 +1,16 @@
+name = "NestedStructInitialiser"
+uuid = "82eb44c5-af0e-4169-934d-9c2441e452c9"
+authors = ["Johanni Brea <jbrea@users.noreply.github.com>"]
+version = "0.1.0"
+
+[deps]
+Requires = "ae029012-a4dd-5104-9daa-d747884805df"
+
+[compat]
+julia = "^1"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
