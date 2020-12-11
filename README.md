@@ -23,16 +23,19 @@ are well known or easy to measure; others we may want to determine indirectly by
 comparing simulations with measurements. For example, the mass and radius of a
 ball are easy to measure, but we may want to find drag coefficients by comparing
 simulated trajectories with measured trajectories. To achieve this we can run
-an optimization method that runs the simulator with different values for the
+an optimisation method that runs the simulator with different values for the
 free parameters until simulations and measurements match.
 
 Nested structures are convenient to express choices (see example below).
 This package provides the function `parameters` to inspect the parameters
 of nested structures and the function `initialiser` to get an efficient
-constructor for nested structures that can be used in an optimization loop.
+constructor for nested structures that can be used in optimisation.
 More specifically, we can tell the `initialiser` all the known parameters
 and it returns a function that takes as input a vector with length equal to the
 number of free parameters and outputs the nested structure.
+The number of free parameters is currently determined in the following way:
+for fields of subtype `Number`: 1, for fields of subtype `NTuple{N}`: `N`
+and for fields of subtype `SArray{S}`: `prod(S)`.
 
 ## Example
 
@@ -140,4 +143,20 @@ Number of Free Parameters: 4
 #37 (generic function with 1 method)
 ```
 
+This initialiser can now be used in optimisation. For the sake of demonstration,
+let us define a dummy method to simulate and compute the loss between simulation
+and measured data.
+```julia
+simulate(s::Simulator{SimpleDrag,PointMass,<:ClayCourt}) = s.ball.mass + sum(s.court.some_parameters) - s.air.ρ
+loss(s, data) = (simulate(s) - data)^2
+const data = 1.2
+loss(x) = loss(c(x), data)
+loss(rand(4))
+```
+We can evaluate this loss function for any value of the four free parameters.
+Therefore we can use it in an optimisation method.
 
+## Alternative, but related approaches
+- [Parameters.jl](https://github.com/mauro3/Parameters.jl)
+- [Setfield.jl](https://github.com/jw3126/Setfield.jl)
+- [ComponentArrays.jl](https://github.com/jonniedie/ComponentArrays.jl)
