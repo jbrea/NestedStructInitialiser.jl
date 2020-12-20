@@ -42,7 +42,7 @@ and for fields of subtype `SArray{S}`: `prod(S)`.
 Here are some structures that we may want to define in a tennis simulator.
 
 ```julia
-using StaticArrays
+using StaticArrays, Unitful
 
 struct Simulator{A,B,C}
     air::A
@@ -60,8 +60,8 @@ struct WithMagnusEffect
 end
 
 # Balls
-struct PointMass
-    mass::Float64
+struct PointMass{U}
+    mass::U
 end
 struct RigidBall{S}
     surface::S
@@ -105,24 +105,31 @@ julia> using NestedStructInitialiser
 julia> parameters(Simulator)
 Simulator Parameters
 Fixed
-Fixed
  none
 Free
- air: indeterminable dimensionality
- ball: indeterminable dimensionality
- court: indeterminable dimensionality
- 
-julia> p = parameters(Simulator, air = SimpleDrag, ball = PointMass, mass = 0.5, court = ClayCourt{3})
+ air: Any (indeterminable dimensionality)
+ ball: Any (indeterminable dimensionality)
+ court: Any (indeterminable dimensionality)
+```
+
+Let us now fix some of the free parameters. Note that we define the units in which
+the mass of the ball is measured and the dimensionality of `some_parameters` in
+the respective type parameters.
+```
+julia> p = parameters(Simulator, air = SimpleDrag, ball = PointMass{typeof(1.0u"kg")}, ρ = () -> rand(), court = ClayCourt{3})
 Simulator Parameters
 Fixed
  air = SimpleDrag
- ball = PointMass
- mass = 0.5
+ ρ = #9
+ ball = PointMass{Quantity{Float64,𝐌,Unitful.FreeUnits{(kg,),𝐌,nothing}}}
  court = ClayCourt{3}
 Free
- ρ: 1 dimensional
- some_parameters: 3 dimensional
+ mass: Quantity{Float64,𝐌,Unitful.FreeUnits{(kg,),𝐌,nothing}}
+ some_parameters: Tuple{Float64,Float64,Float64}
 ```
+The "fixed" value for `ρ` is a function without arguments, which is evaluated
+every time the constructor is called. This can be useful, when you want to
+initialise a state variable with a an array, e.g. `() -> zeros(10)`.
 
 Let us now use the `initialiser` function to get a constructor that takes
 a 4-dimensional vector as input and returns the initialised nested structure.
@@ -132,13 +139,13 @@ Number of Free Parameters: 4
 #35 (generic function with 1 method)
 
 julia> c([1, 2, 3, 4])
-Simulator{SimpleDrag,PointMass,ClayCourt{3}}(SimpleDrag(1.0), PointMass(0.5), ClayCourt{3}((2.0, 3.0, 4.0)))
+Simulator{SimpleDrag,PointMass{Quantity{Float64,𝐌,Unitful.FreeUnits{(kg,),𝐌,nothing}}},ClayCourt{3}}(SimpleDrag(0.5521639102892784), PointMass{Quantity{Float64,𝐌,Unitful.FreeUnits{(kg,),𝐌,nothing}}}(1.0 kg), ClayCourt{3}((2.0, 3.0, 4.0)))
 ```
 
 We could have also called the `initialiser` directly with the known parameters
 to get the same function as above.
 ```julia
-julia> c = initialiser(Simulator, air = SimpleDrag, ball = PointMass, mass = 0.5, court = ClayCourt{3})
+julia> c = initialiser(Simulator, air = SimpleDrag, ball = PointMass{typeof(1.0u"kg")}, ρ = 2., court = ClayCourt{3})
 Number of Free Parameters: 4
 #37 (generic function with 1 method)
 ```
@@ -147,14 +154,19 @@ This initialiser can now be used in optimisation. For the sake of demonstration,
 let us define a dummy method to simulate and compute the loss between simulation
 and measured data.
 ```julia
-simulate(s::Simulator{SimpleDrag,PointMass,<:ClayCourt}) = s.ball.mass + sum(s.court.some_parameters) - s.air.ρ
+simulate(s::Simulator{SimpleDrag,<:PointMass,<:ClayCourt}) = sum(s.court.some_parameters) - s.air.ρ
 loss(s, data) = (simulate(s) - data)^2
 const data = 1.2
 loss(x) = loss(c(x), data)
 loss(rand(4))
 ```
 We can evaluate this loss function for any value of the four free parameters.
-Therefore we can use it in an optimisation method.
+Therefore we can use it in an optimisation method. And if gradients are needed,
+one can use for example [Zygote](https://github.com/FluxML/Zygote.jl).
+```
+using Zygote
+gradient(loss, rand(4))
+```
 
 ## Alternative, but related approaches
 - [Parameters.jl](https://github.com/mauro3/Parameters.jl)
