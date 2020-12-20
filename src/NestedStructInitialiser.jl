@@ -114,7 +114,7 @@ function __init__()
     @require StaticArrays = "90137ffa-7385-5640-81b9-e52037218182" begin
         function free_param(::Type{<:StaticArrays.SArray{S,T,N,L}}, x, k) where {S,T,N,L}
             k[] += L
-            :(StaticArrays.SArray{S}(view($x, $(k[] - L:k[] - 1))))
+            :(StaticArrays.SArray{$S}(view($x, $(k[] - L:k[] - 1))))
         end
         free_param_length(::Type{<:StaticArrays.SArray{S,T,N,L}}) where {S,T,N,L} = L
         free_param_type(::Type{<:StaticArrays.SArray}) = true

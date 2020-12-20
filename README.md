@@ -12,6 +12,30 @@
 [![Documentation](https://img.shields.io/badge/docs-master-blue.svg)](https://jbrea.github.io/NestedStructInitialiser.jl/dev)
 -->
 
+`NestedStructInitialiser.initialiser` creates efficient constructors for nested
+structures.
+
+```julia
+using NestedStructInitialiser, StaticArrays, Unitful
+struct A{N}
+    b
+    c
+    t::NTuple{N, Float64}
+end
+struct B{T}
+    m::T
+    n::Float64
+end
+struct C{N}
+    x::SVector{N, Float64}
+end
+constructor = initialiser(A{2}, b = B{typeof(1.0u"s")}, c = C{2})
+
+julia> constructor([0, 1, 2, 3, 4, 5])
+A{2}(B{Quantity{Float64,𝐓,Unitful.FreeUnits{(s,),𝐓,nothing}}}(0.0 s, 1.0), C{2}([2.0, 3.0]), (4.0, 5.0))
+```
+
+## Motivation
 
 When we simulate complex phenomena, we have usually multiple options
 to approximate certain aspects. For example, in simulations of trajectories of
@@ -112,9 +136,9 @@ Free
  court: Any (indeterminable dimensionality)
 ```
 
-Let us now fix some of the free parameters. Note that we define the units in which
-the mass of the ball is measured and the dimensionality of `some_parameters` in
-the respective type parameters.
+Let us now fix some of the free parameters (in a not so meaningful, but hopefully
+educative way). Note that we define the units in which the mass of the ball is measured
+and the dimensionality of `some_parameters` in the respective type parameters.
 ```
 julia> p = parameters(Simulator, air = SimpleDrag, ball = PointMass{typeof(1.0u"kg")}, ρ = () -> rand(), court = ClayCourt{3})
 Simulator Parameters
@@ -129,7 +153,7 @@ Free
 ```
 The "fixed" value for `ρ` is a function without arguments, which is evaluated
 every time the constructor is called. This can be useful, when you want to
-initialise a state variable with a an array, e.g. `() -> zeros(10)`.
+initialise a state variable with an array, e.g. `() -> zeros(10)`.
 
 Let us now use the `initialiser` function to get a constructor that takes
 a 4-dimensional vector as input and returns the initialised nested structure.
