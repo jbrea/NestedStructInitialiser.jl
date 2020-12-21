@@ -160,7 +160,7 @@ Free
 ```
 
 Let us now fix some of the free parameters (in a not so meaningful, but hopefully
-educative way). Note that we define the units in which the mass of the ball is measured
+instructive way). Note that we define the units in which the mass of the ball is measured
 and the dimensionality of `some_parameters` in the respective type parameters.
 ```
 julia> p = parameters(Simulator, air = SimpleDrag, ball = PointMass{typeof(1.0u"kg")}, ρ = () -> rand(), court = ClayCourt{3})
