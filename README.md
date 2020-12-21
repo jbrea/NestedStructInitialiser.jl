@@ -17,17 +17,17 @@ structures.
 
 ```julia
 julia> using NestedStructInitialiser, StaticArrays, Unitful
-    struct A{N}
+julia> struct A{N}
         b
         c
         t::NTuple{N, Float64}
     end
-    struct B{T}
+julia> struct B{T}
         m::T
         n::Float64
         o::Int
     end
-    struct C{N}
+julia> struct C{N}
         x::SVector{N, Float64}
     end
 
