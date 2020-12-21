@@ -12,7 +12,8 @@
 [![Documentation](https://img.shields.io/badge/docs-master-blue.svg)](https://jbrea.github.io/NestedStructInitialiser.jl/dev)
 -->
 
-`NestedStructInitialiser.initialiser` creates efficient constructors for nested
+`NestedStructInitialiser` exports two functions: `parameters` helps to explore
+nested structures and `initialiser` creates efficient constructors for nested
 structures.
 
 ```julia
