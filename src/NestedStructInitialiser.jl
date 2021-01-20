@@ -1,5 +1,7 @@
 module NestedStructInitialiser
+using RuntimeGeneratedFunctions
 using Requires
+RuntimeGeneratedFunctions.init(@__MODULE__)
 
 export parameters, initialiser
 
@@ -106,7 +108,7 @@ function initialiser(s::Type; kwargs...)
     k = Ref(1)
     rhs = type_initialiser(s, :x, k; kwargs...)
     println("Number of Free Parameters: $(k[] - 1)")
-    eval(:(x -> $rhs))
+    @RuntimeGeneratedFunction(:(x -> $rhs))
 end
 initialiser(p::Parameters) = initialiser(p.type; p.fixed...)
 

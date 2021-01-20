@@ -5,6 +5,7 @@ version = "0.1.0"
 
 [deps]
 Requires = "ae029012-a4dd-5104-9daa-d747884805df"
+RuntimeGeneratedFunctions = "7e49a35a-f44a-4d26-94aa-eba1b4ca6b47"
 
 [compat]
 julia = "^1"
