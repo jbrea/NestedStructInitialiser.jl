@@ -74,8 +74,7 @@ end
 isleaf(::Number) = true
 isleaf(::AbstractArray{<:Number}) = true
 isleaf(::NTuple) = true
-isleaf(f::Function) = applicable(f)
-isleaf(::Any) = false
+isleaf(f) = applicable(f)
 
 function free_param(::Type{<:Number}, x, k)
     k[] += 1
@@ -90,7 +89,7 @@ end
 function field_initialiser(name, type, x, k; kwargs...)
     if haskey(kwargs, name)
         val = kwargs[name]
-        isleaf(val) && return typeof(val) <: Function ? :($val()) : val
+        isleaf(val) && return applicable(val) ? :($val()) : val
         type_initialiser(val, x, k; kwargs...)
     else
         if free_param_type(type)
@@ -104,10 +103,10 @@ function type_initialiser(s, x, k; kwargs...)
     :($s($([field_initialiser(f, fieldtype(s, i), x, k; kwargs...)
             for (i, f) in enumerate(fieldnames(s))]...)))
 end
-function initialiser(s::Type; kwargs...)
+function initialiser(s::Type; silent = true, kwargs...)
     k = Ref(1)
     rhs = type_initialiser(s, :x, k; kwargs...)
-    println("Number of Free Parameters: $(k[] - 1)")
+    silent || println("Number of Free Parameters: $(k[] - 1)")
     @RuntimeGeneratedFunction(:(x -> $rhs))
 end
 initialiser(p::Parameters) = initialiser(p.type; p.fixed...)
