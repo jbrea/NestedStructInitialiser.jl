@@ -1,6 +1,7 @@
 module NestedStructInitialiser
 using RuntimeGeneratedFunctions
-using Requires
+using Unitful
+using StaticArrays
 RuntimeGeneratedFunctions.init(@__MODULE__)
 
 export parameters, initialiser
@@ -85,6 +86,16 @@ function free_param(::Type{<:NTuple{N}}, x, k) where N
     args = [:($x[$i]) for i in k[] - N:k[] - 1]
     :(tuple($(args...)))
 end
+function free_param(::Type{<:StaticArrays.SArray{S,T,N,L}}, x, k) where {S,T,N,L}
+    k[] += L
+    :(StaticArrays.SArray{$S}(view($x, $(k[] - L:k[] - 1))))
+end
+free_param_length(::Type{<:StaticArrays.SArray{S,T,N,L}}) where {S,T,N,L} = L
+free_param_type(::Type{<:StaticArrays.SArray}) = true
+function free_param(t::Type{<:Unitful.Quantity{<:Number}}, x, k)
+    k[] += 1
+    :($t($x[$(k[]-1)]))
+end
 
 function field_initialiser(name, type, x, k; kwargs...)
     if haskey(kwargs, name)
@@ -109,23 +120,6 @@ function initialiser(s::Type; silent = true, kwargs...)
     silent || println("Number of Free Parameters: $(k[] - 1)")
     @RuntimeGeneratedFunction(:(x -> $rhs))
 end
-initialiser(p::Parameters) = initialiser(p.type; p.fixed...)
-
-function __init__()
-    @require StaticArrays = "90137ffa-7385-5640-81b9-e52037218182" begin
-        function free_param(::Type{<:StaticArrays.SArray{S,T,N,L}}, x, k) where {S,T,N,L}
-            k[] += L
-            :(StaticArrays.SArray{$S}(view($x, $(k[] - L:k[] - 1))))
-        end
-        free_param_length(::Type{<:StaticArrays.SArray{S,T,N,L}}) where {S,T,N,L} = L
-        free_param_type(::Type{<:StaticArrays.SArray}) = true
-    end
-    @require Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d" begin
-        function free_param(t::Type{<:Unitful.Quantity{<:Number}}, x, k)
-            k[] += 1
-            :($t($x[$(k[]-1)]))
-        end
-    end
-end
+initialiser(p::Parameters; silent = true) = initialiser(p.type; silent, p.fixed...)
 
 end # module
